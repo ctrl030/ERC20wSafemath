@@ -78,9 +78,11 @@ contract ERC20 is Ownable {
     function approve(address _spender, uint256 _value) public returns (bool success) {
         require (_value <= _balances[msg.sender]); 
         
+        uint256 _newApprovedTotal;
+        
         // correct? new approvals stack on top of each other in this fashion.
         _allowances[msg.sender][_spender] = _allowances[msg.sender][_spender].add(_value);
-        _newApprovedTotal = _allowances[msg.sender][_spender]
+        _newApprovedTotal = _allowances[msg.sender][_spender];
         
         emit Approval (msg.sender, _spender, _value, _newApprovedTotal);
         success = true;        

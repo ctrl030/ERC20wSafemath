@@ -16,7 +16,7 @@ contract ERC20 is Ownable {
     
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value, uint _newApprovedTotal);
     
     event TransferFromSuccessfulEvent (address sender, uint256 amountTransferred, address recipient, address addressThatIsTransferring);
 
@@ -71,32 +71,19 @@ contract ERC20 is Ownable {
         
         assert (_balances[msg.sender] == (balanceBeforeSending.sub(amount)));
         assert (_balances[recipientAddress] == (balanceBeforeReceiving.add(amount)));
-        
-        if (_balances[msg.sender] != balanceBeforeSending.sub(amount)) {
-            success = false;
-        }
-        else {
-            success = true;
-        }    
-        
-        if (success == false) {
-            revert();
-        }
-        else {
-            emit Transfer (msg.sender, recipientAddress, amount);
-            return success;
-        }
+             
+        success = true;        
     }
     
     function approve(address _spender, uint256 _value) public returns (bool success) {
         require (_value <= _balances[msg.sender]); 
         
-        _allowances[msg.sender][_spender] = 0;
-        _allowances[msg.sender][_spender] = _value;
+        // correct? new approvals stack on top of each other in this fashion.
+        _allowances[msg.sender][_spender] = _allowances[msg.sender][_spender].add(_value);
+        _newApprovedTotal = _allowances[msg.sender][_spender]
         
-        emit Approval (msg.sender, _spender, _value);
-        success = true;
-        return success;
+        emit Approval (msg.sender, _spender, _value, _newApprovedTotal);
+        success = true;        
     }
     
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
@@ -126,21 +113,6 @@ contract ERC20 is Ownable {
         assert (_balances[senderAddress] == balanceBeforeSending.sub(amount));
         assert (_balances[recipientAddress] == balanceBeforeReceiving.add(amount));
         assert (_allowances[senderAddress][msg.sender] == allowanceBeforeTransfer.sub(amount));
-        
-        if (_balances[senderAddress] != balanceBeforeSending.sub(amount)) {
-            success = false;
-        }
-        else {
-            success = true;
-        }    
-        
-        if (success == false) {
-            revert();
-        }
-        else {
-            emit Transfer (senderAddress, recipientAddress, amount);
-            emit TransferFromSuccessfulEvent (senderAddress, amount, recipientAddress, msg.sender);
-            return success;
-        }
+        success = true;        
     }
 }
